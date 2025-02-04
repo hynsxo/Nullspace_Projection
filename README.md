@@ -1,6 +1,7 @@
 # Nullspace_Projection
 Robot 양팔 충돌회피 알고리즘 (Nullspace Projection)
 
+
 **여유 자유도(Redundancy)란?**
 
 - 로봇 매니퓰레이터의 자유도(DOF, Degrees of Freedom)란?
@@ -47,6 +48,11 @@ q˙=q˙primary+q˙avoid
 
 즉, **목표 동작을 방해하지 않으면서 Null-space에서 충돌 회피 행동을 추가**하는 방식입니다.
 
+---
+
+<img src="./image/nullspaceProjection.png" alt="nullspaceProjection">
+
+---
 
 
 >> 참고 논문: **여유 자유도를 이용한 두 팔 로봇 매니퓰레이터의 충돌 회피 알고리즘**<br>
