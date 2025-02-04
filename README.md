@@ -48,6 +48,56 @@ q˙=q˙primary+q˙avoid
 
 즉, **목표 동작을 방해하지 않으면서 Null-space에서 충돌 회피 행동을 추가**하는 방식입니다.
 
+
+<pre>
+Eigen::VectorXd PathManager::avoidCollisionAndAdjustAngles(Eigen::VectorXd& Qf, const Eigen::VectorXd& Qi, Eigen::VectorXd& wristR, Eigen::VectorXd& wristL) {
+    // 팔의 최소 거리 기준 (0.01m)
+    double minDistance = 0.01;
+    
+    if (checkCollision(wristR, wristL, minDistance)) {
+        // 충돌 회피 벡터 (반대 방향으로 이동하도록 설정)
+        Eigen::Vector3d avoidanceDirection = (wristR - wristL).normalized();
+        wristR += 0.05 * avoidanceDirection;
+        wristL -= 0.05 * avoidanceDirection;
+
+        // // Jacobian 계산
+        // Eigen::MatrixXd J(6, 9);  // Jacobian 행렬
+        // J.setRandom();  // 랜덤한 Jacobian 값 (실제 로봇 Jacobian 사용)
+        Eigen::MatrixXd J = computeJacobian(Qf);
+        Eigen::MatrixXd J_inv = J.completeOrthogonalDecomposition().pseudoInverse();
+        
+        // 회피 속도 생성 (회피 방향으로 이동)
+        Eigen::VectorXd dq_avoid = Eigen::VectorXd::Zero(Qf.size());
+        dq_avoid.head(3) = 0.05 * avoidanceDirection;
+        
+        // Null-space projection 적용하여 기존 이동을 방해하지 않도록 보정
+        Eigen::VectorXd dq_adjusted = (Eigen::MatrixXd::Identity(Qf.size(), Qf.size()) - J_inv * J) * dq_avoid;
+        
+        // 최종 수정된 Qf 적용
+        Qf += dq_adjusted;
+    }
+    return Qf;
+}
+
+Eigen::MatrixXd PathManager::computeJacobian(const Eigen::VectorXd& Q) {
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3, Q.size());
+    
+    // Jacobian 행렬 초기화 (간단한 예제, 필요에 따라 수정 가능)
+    for (int i = 0; i < Q.size(); ++i) {
+        J(0, i) = -sin(Q(i)); // x 변화에 대한 영향, 사용자 정의
+        J(1, i) = cos(Q(i));  // y 변화에 대한 영향, 사용자 정의
+        J(2, i) = 1.0;        // z 변화에 대한 영향, 사용자 정의
+    }
+    
+    return J;
+}
+
+bool PathManager::checkCollision(const Eigen::VectorXd& wrist1, const Eigen::VectorXd& wrist2, double minDistance) {
+    double distance = (wrist1 - wrist2).norm();
+    return distance < minDistance;
+}
+</pre>
+
 ---
 
 <img src="./image/nullspaceProjection.png" alt="nullspaceProjection">
